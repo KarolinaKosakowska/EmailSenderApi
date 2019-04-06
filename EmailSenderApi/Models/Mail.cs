@@ -10,11 +10,14 @@ namespace EmailSenderApi.Models
     {
         public int ID { get; set; }
         [Required]
-        public virtual Reciver Reciver { get; set; }
+        //public virtual Reciver Reciver { get; set; }
+        //[Required]
+
+        public string To { get; set; }
         [Required]
-        public string MailFrom { get; set; }
+        public string From { get; set; }
         public string Title { get; set; }
-        [Required(ErrorMessage="Treść jest wymagana")]
+        [Required(ErrorMessage = "Treść jest wymagana")]
         public string Body { get; set; }
     }
 }

@@ -10,6 +10,6 @@ namespace EmailSenderApi.Models
     {
         public int ID { get; set; }
         [Required]
-        public string MailTo { get; set; }
+        public string To { get; set; }
     }
 }

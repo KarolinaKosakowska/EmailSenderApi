@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EmailSenderApi.Models;
+using System.Text.RegularExpressions;
+using System.Net.Mail;
 
 namespace EmailSenderApi.Controllers
 {
@@ -13,113 +15,144 @@ namespace EmailSenderApi.Controllers
     [ApiController]
     public class MailsController : ControllerBase
     {
-        private readonly MailContext _context;
+        private readonly MailContext db;
 
-        public MailsController(MailContext context)
+        public MailsController(MailContext db)
         {
-            _context = context;
+            this.db = db;
         }
 
         // GET: api/Mails
         [HttpGet]
-        public IEnumerable<Mail> GetMails()
+        public IActionResult GetMails()
         {
-            return _context.Mails;
+            try
+            {
+                return Ok(db.Mails);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+
         }
 
         // GET: api/Mails/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetMail([FromRoute] int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        //[HttpGet("{id:int}")]
+        //public async Task<IActionResult> GetMail([FromRoute] int id)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    }
 
-            var mail = await _context.Mails.FindAsync(id);
+        //    var mail = await db.Mails.FindAsync(id);
 
-            if (mail == null)
-            {
-                return NotFound();
-            }
+        //    if (mail == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            return Ok(mail);
-        }
+        //    return Ok(mail);
+        //}
 
-        // PUT: api/Mails/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutMail([FromRoute] int id, [FromBody] Mail mail)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        //// PUT: api/Mails/5
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> PutMail([FromRoute] int id, [FromBody] Mail mail)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    }
 
-            if (id != mail.ID)
-            {
-                return BadRequest();
-            }
+        //    if (id != mail.ID)
+        //    {
+        //        return BadRequest();
+        //    }
 
-            _context.Entry(mail).State = EntityState.Modified;
+        //    db.Entry(mail).State = EntityState.Modified;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!MailExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+        //    try
+        //    {
+        //        await db.SaveChangesAsync();
+        //    }
+        //    catch (DbUpdateConcurrencyException)
+        //    {
+        //        if (!MailExists(id))
+        //        {
+        //            return NotFound();
+        //        }
+        //        else
+        //        {
+        //            throw;
+        //        }
+        //    }
 
-            return NoContent();
-        }
+        //    return NoContent();
+        //}
 
         // POST: api/Mails
         [HttpPost]
-        public async Task<IActionResult> PostMail([FromBody] Mail mail)
+        public IActionResult SendMail(Mail mail)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (ModelState.IsValid && EmailIsValid(mail.To))
+                {
+                    db.Mails.Add(mail);
+                    db.SaveChanges();
+                    var message = new MailMessage();
+                    message.From = new MailAddress(mail.From, mail.From);
+                    message.To.Add(new MailAddress(mail.To));
+                    message.Subject = mail.Title;
+                    message.Body = mail.Body;
+                    var smtp = new SmtpClient();
+                    smtp.Send(message);
+
+                    return CreatedAtAction("Wysłano", new { id = mail.ID }, mail);
+                }
+                return BadRequest("Sprawdź adresy, proawidłowy wygląda nasępująco: aaa@aaa.aaa");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
             }
 
-            _context.Mails.Add(mail);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetMail", new { id = mail.ID }, mail);
         }
 
-        // DELETE: api/Mails/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMail([FromRoute] int id)
+        //// DELETE: api/Mails/5
+        //[HttpDelete("{id}")]
+        //public async Task<IActionResult> DeleteMail([FromRoute] int id)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    }
+
+        //    var mail = await db.Mails.FindAsync(id);
+        //    if (mail == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    db.Mails.Remove(mail);
+        //    await db.SaveChangesAsync();
+
+        //    return Ok(mail);
+        //}
+
+        //private bool MailExists(int id)
+        //{
+        //    return db.Mails.Any(e => e.ID == id);
+        //}
+        public bool EmailIsValid(object value)
         {
-            if (!ModelState.IsValid)
+            Regex regex = new Regex(@"^((?:(?:[a-zA-Z0-9_\-\.]+)@(?:(?:\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(?:(?:[a-zA-Z0-9\-]+\.)+))(?:[a-zA-Z]{2,4}|[0-9]{1,3})(?:\]?)(?:\s*;\s*|\s*$))*)$");
+            if (!regex.Match(value.ToString()).Success)
             {
-                return BadRequest(ModelState);
+                return false;
             }
-
-            var mail = await _context.Mails.FindAsync(id);
-            if (mail == null)
-            {
-                return NotFound();
-            }
-
-            _context.Mails.Remove(mail);
-            await _context.SaveChangesAsync();
-
-            return Ok(mail);
-        }
-
-        private bool MailExists(int id)
-        {
-            return _context.Mails.Any(e => e.ID == id);
+            return true;
         }
     }
 }

@@ -1,0 +1,19 @@
+###
+POST {{URL}}
+content-type: application/json
+
+{
+  "id": 0,
+  "to": "krzysztof.sauermann@gmail.com;aaa.bbb@cccddd.pl",
+  "from" : "krzysztof.sauermann@gmail.com",
+  "title": "Tytuł",
+  "body": "Treść"
+}
+
+Wraca:
+201 z informację "Wysłano", nie musi wracać obiekt.
+
+###
+GET {{URL}}
+
+
