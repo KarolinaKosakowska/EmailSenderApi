@@ -2,10 +2,11 @@
 ###
 POST {{URL}}
 content-type: application/json
+
 {
   "id": 1,
-  "to": "krzysztof.sauermann@gmail.com;aaa.bbb@cccddd.pl",
-  "from" : "krzysztof.sauermann@gmail.com",
+ "to": "aaa.bbb@cccddd.pl",
+   "from" : "",
   "title": "Tytuł",
   "body": "Treść"
 }

@@ -94,39 +94,36 @@ namespace EmailSenderApi.Controllers
 
         // POST: api/Mails
         [HttpPost]
-        public IActionResult SendMail( Mail mail)
+        public IActionResult SendMail(Mail mail)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                   
                     var smtpClient = new SmtpClient
                     {
                         Host = "smtp.gmail.com",
-                        Port = 587, 
+                        Port = 587,
                         EnableSsl = true,
-                        Credentials = new NetworkCredential(mail.From, "")
+                        Credentials = new NetworkCredential("karo", "")
                     };
+                    List<string> to = new List<string>();
+                    var message = new MailMessage();
+                    to.AddRange(mail.To.Split(";", StringSplitOptions.RemoveEmptyEntries));
+                    to.ForEach(m => message.To.Add(new MailAddress(m)));
+                    message.From = new MailAddress("");
+                    message.Subject = mail.Title;
+                    message.Body = mail.Body;
+                    smtpClient.Send(message);
 
-                    using (var message = new MailMessage("sendermail58", mail.To)
-                    {
-                        Subject = mail.Title,
-                        Body = mail.Body
-                    })
-                    {
-                        smtpClient.Send(message);
-                    }
-                    db.Mails.Add(mail);
-                    db.SaveChanges();
-                   
-                    return CreatedAtAction("Wysłano", new { id = mail.ID }, mail);
+                   // db.Mails.Add(mail);
+                    //db.SaveChanges();
+
+                    return Ok("Wysłano");
                 }
 
                 return BadRequest("Sprawdź adresy, proawidłowy wygląda nasępująco: aaa@aaa.aaa");
             }
-
-
             catch (Exception ex)
             {
                 return BadRequest(ex);
