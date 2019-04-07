@@ -9,10 +9,6 @@ namespace EmailSenderApi.Models
     public class Mail
     {
         public int ID { get; set; }
-        [Required]
-        //public virtual Reciver Reciver { get; set; }
-        //[Required]
-
         public string To { get; set; }
         [Required]
         public string From { get; set; }

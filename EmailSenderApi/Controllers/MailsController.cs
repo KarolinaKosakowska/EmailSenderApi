@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using EmailSenderApi.Models;
 using System.Text.RegularExpressions;
 using System.Net.Mail;
+using System.Net;
 
 namespace EmailSenderApi.Controllers
 {
@@ -93,32 +94,47 @@ namespace EmailSenderApi.Controllers
 
         // POST: api/Mails
         [HttpPost]
-        public IActionResult SendMail(Mail mail)
+        public IActionResult SendMail( Mail mail)
         {
             try
             {
-                if (ModelState.IsValid && EmailIsValid(mail.To))
+                if (ModelState.IsValid)
                 {
+                   
+                    var smtpClient = new SmtpClient
+                    {
+                        Host = "smtp.gmail.com",
+                        Port = 587, 
+                        EnableSsl = true,
+                        Credentials = new NetworkCredential(mail.From, "")
+                    };
+
+                    using (var message = new MailMessage("sendermail58", mail.To)
+                    {
+                        Subject = mail.Title,
+                        Body = mail.Body
+                    })
+                    {
+                        smtpClient.Send(message);
+                    }
                     db.Mails.Add(mail);
                     db.SaveChanges();
-                    var message = new MailMessage();
-                    message.From = new MailAddress(mail.From, mail.From);
-                    message.To.Add(new MailAddress(mail.To));
-                    message.Subject = mail.Title;
-                    message.Body = mail.Body;
-                    var smtp = new SmtpClient();
-                    smtp.Send(message);
-
+                   
                     return CreatedAtAction("Wysłano", new { id = mail.ID }, mail);
                 }
+
                 return BadRequest("Sprawdź adresy, proawidłowy wygląda nasępująco: aaa@aaa.aaa");
             }
+
+
             catch (Exception ex)
             {
                 return BadRequest(ex);
             }
-
         }
+
+
+
 
         //// DELETE: api/Mails/5
         //[HttpDelete("{id}")]
@@ -156,3 +172,4 @@ namespace EmailSenderApi.Controllers
         }
     }
 }
+

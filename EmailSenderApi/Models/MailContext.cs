@@ -13,6 +13,6 @@ namespace EmailSenderApi.Models
 
         }
         public DbSet<Mail> Mails { get; set; }
-        public DbSet<Reciver> Recivers { get; set; }
+
     }
 }
